@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { StatusDot } from "@/components/shared/StatusDot";
 import { PROVIDERS } from "@/lib/mock-data";
 
-const NAVIGATION = [
+export const NAVIGATION = [
   { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
   { name: 'Playground', icon: PlayCircle, href: '/dashboard/playground' },
   { name: 'Benchmarks', icon: BarChart3, href: '/dashboard/benchmarks' },
@@ -15,11 +15,11 @@ const NAVIGATION = [
   { name: 'Settings', icon: Settings, href: '/dashboard/settings' },
 ];
 
-export function Sidebar() {
+export function SidebarContent({ onItemClick }: { onItemClick?: () => void }) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-[260px] fixed inset-y-0 left-0 bg-surface border-r border-border hidden lg:flex flex-col z-50">
+    <div className="flex flex-col h-full bg-surface border-r border-border">
       <div className="p-6 flex items-center gap-3">
         <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center text-bg shadow-glow-blue">
           <Hexagon className="w-5 h-5 fill-current" />
@@ -27,7 +27,7 @@ export function Sidebar() {
         <span className="font-headline font-bold text-xl tracking-tight text-white">NeuralRoute</span>
       </div>
 
-      <nav className="flex-1 px-3 space-y-1">
+      <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
         <div className="px-3 py-2 text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em] mb-1">
           Navigation
         </div>
@@ -37,6 +37,7 @@ export function Sidebar() {
             <Link
               key={item.name}
               href={item.href}
+              onClick={onItemClick}
               className={cn(
                 "flex items-center gap-3 px-3 py-2 rounded-md transition-all group",
                 isActive 
@@ -74,6 +75,14 @@ export function Sidebar() {
           GitHub
         </Link>
       </div>
+    </div>
+  );
+}
+
+export function Sidebar() {
+  return (
+    <aside className="w-[260px] fixed inset-y-0 left-0 hidden lg:block z-50">
+      <SidebarContent />
     </aside>
   );
 }

@@ -8,14 +8,16 @@ import { MOCK_REQUESTS } from "@/lib/mock-data";
 import { ProviderBadge } from "@/components/shared/ProviderBadge";
 import { TaskChip } from "@/components/shared/TaskChip";
 import { format } from "date-fns";
-import { Search, Filter, ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
+import { Search, Filter, ChevronLeft, ChevronRight, MoreHorizontal, Clock, Cpu, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 export default function LogsPage() {
   const [search, setSearch] = useState("");
-  const itemsPerPage = 15;
   const [page, setPage] = useState(1);
+  const [selectedRequest, setSelectedRequest] = useState<any>(null);
+  const itemsPerPage = 15;
 
   const filtered = MOCK_REQUESTS.filter(r => 
     r.prompt.toLowerCase().includes(search.toLowerCase()) || 
@@ -63,7 +65,11 @@ export default function LogsPage() {
               </thead>
               <tbody className="divide-y divide-border-subtle">
                 {paginated.map((req) => (
-                  <tr key={req.id} className="hover:bg-white/5 transition-colors group cursor-pointer">
+                  <tr 
+                    key={req.id} 
+                    className="hover:bg-white/5 transition-colors group cursor-pointer"
+                    onClick={() => setSelectedRequest(req)}
+                  >
                     <td className="px-6 py-4">
                       <div className="flex flex-col">
                         <span className="text-xs font-medium text-white">{format(new Date(req.time), 'MMM d, HH:mm')}</span>
@@ -123,6 +129,80 @@ export default function LogsPage() {
           </div>
         </Card>
       </div>
+
+      <Sheet open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
+        <SheetContent className="bg-bg border-l-border w-full sm:max-w-xl overflow-y-auto">
+          {selectedRequest && (
+            <div className="space-y-8 py-6">
+              <SheetHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className={cn(
+                    "w-8 h-8 rounded-full flex items-center justify-center",
+                    selectedRequest.status === 'success' ? "bg-success/20 text-success" : "bg-danger/20 text-danger"
+                  )}>
+                    {selectedRequest.status === 'success' ? '✓' : '✗'}
+                  </div>
+                  <SheetTitle className="text-2xl font-headline font-bold">Request Detail</SheetTitle>
+                </div>
+                <SheetDescription className="font-mono text-xs uppercase tracking-widest text-text-muted">ID: #{selectedRequest.id}</SheetDescription>
+              </SheetHeader>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 rounded-lg bg-surface border border-border">
+                  <div className="flex items-center gap-2 mb-1 text-text-muted">
+                    <Clock className="w-3 h-3" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Latency</span>
+                  </div>
+                  <p className="text-xl font-headline font-bold font-mono text-primary">{selectedRequest.latency}ms</p>
+                </div>
+                <div className="p-4 rounded-lg bg-surface border border-border">
+                  <div className="flex items-center gap-2 mb-1 text-text-muted">
+                    <Cpu className="w-3 h-3" />
+                    <span className="text-[10px] font-bold uppercase tracking-widest">Fallback</span>
+                  </div>
+                  <p className="text-xl font-headline font-bold font-mono text-text-muted">{selectedRequest.fallback ? 'Yes' : 'No'}</p>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-widest flex items-center gap-2">
+                  <ArrowRightLeft className="w-3 h-3" />
+                  Routing Outcome
+                </h4>
+                <div className="flex flex-wrap gap-3 p-4 rounded-lg bg-surface border border-border">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] text-text-muted font-medium">Task Classification</span>
+                    <TaskChip taskId={selectedRequest.taskType} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] text-text-muted font-medium">Selected Provider</span>
+                    <ProviderBadge providerId={selectedRequest.provider} />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Prompt</h4>
+                <div className="p-4 rounded-lg bg-white/5 border border-border font-mono text-sm leading-relaxed whitespace-pre-wrap">
+                  {selectedRequest.prompt}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Model Response</h4>
+                <div className="p-4 rounded-lg bg-white/5 border border-border font-mono text-sm leading-relaxed whitespace-pre-wrap text-text-secondary">
+                  {selectedRequest.response}
+                </div>
+              </div>
+
+              <div className="pt-6 border-t border-border-subtle flex gap-3">
+                <Button variant="outline" className="flex-1 border-border bg-surface text-xs h-10">Re-run Request</Button>
+                <Button variant="outline" className="flex-1 border-border bg-surface text-xs h-10 text-danger hover:bg-danger/10">Delete Log</Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </DashboardLayout>
   );
 }

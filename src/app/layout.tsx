@@ -1,6 +1,7 @@
 import type {Metadata} from 'next';
 import './globals.css';
-import { Toaster } from "@/components/ui/toaster"
+import { Toaster } from "@/components/ui/toaster";
+import { CommandPalette } from "@/components/dashboard/CommandPalette";
 
 export const metadata: Metadata = {
   title: 'NeuralRoute — Route smarter. Infer faster.',
@@ -21,6 +22,7 @@ export default function RootLayout({
       </head>
       <body className="font-body antialiased selection:bg-primary/30 selection:text-primary">
         {children}
+        <CommandPalette />
         <Toaster />
       </body>
     </html>

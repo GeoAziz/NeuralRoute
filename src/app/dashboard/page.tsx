@@ -1,5 +1,7 @@
+
 "use client";
 
+import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { StatCard } from "@/components/shared/StatCard";
 import { ProviderBadge } from "@/components/shared/ProviderBadge";
@@ -30,15 +32,29 @@ const distributionData = [
 ];
 
 export default function DashboardPage() {
+  const [requestCount, setRequestCount] = useState(12483);
+  const [latency, setLatency] = useState(147);
   const recentRequests = MOCK_REQUESTS.slice(0, 8);
+
+  // Simulate real-time updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setRequestCount(prev => prev + Math.floor(Math.random() * 3));
+      setLatency(prev => {
+        const jitter = Math.floor(Math.random() * 5) - 2;
+        return Math.max(130, Math.min(180, prev + jitter));
+      });
+    }, 5000);
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <DashboardLayout title="Overview">
       <div className="space-y-8">
         {/* Stats Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <StatCard label="Requests Routed" value="12,483" delta="+8.3% today" trend="up" />
-          <StatCard label="Avg Latency" value="147ms" delta="-12ms vs yesterday" trend="up" />
+          <StatCard label="Requests Routed" value={requestCount.toLocaleString()} delta="+8.3% today" trend="up" />
+          <StatCard label="Avg Latency" value={`${latency}ms`} delta="-12ms vs yesterday" trend="up" />
           <StatCard label="Success Rate" value="98.7%" delta="+0.2%" trend="up" />
           <StatCard label="Active Providers" value="3 / 3" />
         </div>
