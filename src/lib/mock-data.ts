@@ -65,7 +65,7 @@ export const BENCHMARKS = [
   { task: 'rag', provider: 'gemini', quality: 4.5, p50: 290 },
 ];
 
-export const MOCK_REQUESTS = Array.from({ length: 100 }).map((_, i) => {
+export const MOCK_REQUESTS = Array.from({ length: 200 }).map((_, i) => {
   const providers = Object.keys(PROVIDERS) as ProviderId[];
   const taskIds = TASK_TYPES.map(t => t.id);
   const providerId = providers[Math.floor(Math.random() * providers.length)];
@@ -80,7 +80,7 @@ export const MOCK_REQUESTS = Array.from({ length: 100 }).map((_, i) => {
     quality: (Math.random() * 1.5 + 3.3).toFixed(1),
     fallback: Math.random() > 0.9,
     status: Math.random() > 0.05 ? 'success' : 'error' as const,
-    prompt: "Example prompt " + i,
-    response: "Example response " + i
+    prompt: "Mock request prompt for " + taskId + " task instance #" + i,
+    response: "This is a simulated response from " + providerId + " for the " + taskId + " request."
   };
 }).sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());

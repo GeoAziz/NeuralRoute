@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DashboardLayout } from "@/components/dashboard/DashboardLayout";
 import { Card } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Send, Loader2, Sparkles, AlertCircle, Info } from "lucide-react";
+import { Send, Loader2, Sparkles, CheckCircle, ArrowRight, Zap, Code } from "lucide-react";
 import { TaskChip } from "@/components/shared/TaskChip";
 import { ProviderBadge } from "@/components/shared/ProviderBadge";
 import { classifyPrompt } from "@/ai/flows/classify-prompt-flow";
@@ -23,15 +22,18 @@ const EXAMPLES = [
 export default function PlaygroundPage() {
   const [prompt, setPrompt] = useState("");
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState<'idle' | 'classifying' | 'routing' | 'complete'>('idle');
+  const [step, setStep] = useState<'idle' | 'classifying' | 'routing' | 'streaming' | 'complete'>('idle');
   const [result, setResult] = useState<RouteLlmOutput | null>(null);
   const [classification, setClassification] = useState<{ taskType: string; confidence: number } | null>(null);
+  const [streamedText, setStreamedText] = useState("");
+  const streamTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleSend = async () => {
     if (!prompt.trim()) return;
     setLoading(true);
     setResult(null);
     setClassification(null);
+    setStreamedText("");
     
     try {
       setStep('classifying');
@@ -42,14 +44,39 @@ export default function PlaygroundPage() {
       const routeRes = await routeLlm({ userPrompt: prompt, classifiedTaskType: cls.taskType as any });
       setResult(routeRes);
       
-      setStep('complete');
+      // Simulate streaming
+      setStep('streaming');
+      streamText(routeRes.llmResponse);
     } catch (error) {
       console.error(error);
       setStep('idle');
-    } finally {
       setLoading(false);
     }
   };
+
+  const streamText = (text: string) => {
+    let index = 0;
+    const interval = 25; // ms per character
+    
+    const stream = () => {
+      if (index <= text.length) {
+        setStreamedText(text.slice(0, index));
+        index++;
+        streamTimeoutRef.current = setTimeout(stream, interval);
+      } else {
+        setStep('complete');
+        setLoading(false);
+      }
+    };
+    
+    stream();
+  };
+
+  useEffect(() => {
+    return () => {
+      if (streamTimeoutRef.current) clearTimeout(streamTimeoutRef.current);
+    };
+  }, []);
 
   return (
     <DashboardLayout title="Playground">
@@ -115,34 +142,70 @@ export default function PlaygroundPage() {
             <div className="flex-1 flex flex-col overflow-hidden">
               <div className="p-6 border-b border-border-subtle space-y-6">
                 {/* Step Indicators */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {step === 'classifying' ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : <div className="w-4 h-4 rounded-full bg-success/20 text-success flex items-center justify-center text-[10px]">✓</div>}
-                      <span className="text-xs font-bold uppercase tracking-widest">Classification</span>
-                    </div>
-                    {classification && <TaskChip taskId={classification.taskType as any} />}
+                <div className="flex gap-4 items-center">
+                   <div className="flex items-center gap-2">
+                      <div className={cn(
+                        "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold",
+                        step === 'classifying' ? "bg-primary text-bg animate-pulse" : "bg-success/20 text-success"
+                      )}>
+                        {step === 'classifying' ? '1' : '✓'}
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Classify</span>
+                   </div>
+                   <ArrowRight className="w-3 h-3 text-text-muted opacity-30" />
+                   <div className="flex items-center gap-2">
+                      <div className={cn(
+                        "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold",
+                        step === 'routing' ? "bg-primary text-bg animate-pulse" : step === 'classifying' ? "border border-border text-text-muted" : "bg-success/20 text-success"
+                      )}>
+                        {step === 'routing' ? '2' : (step === 'classifying' ? '2' : '✓')}
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Route</span>
+                   </div>
+                   <ArrowRight className="w-3 h-3 text-text-muted opacity-30" />
+                   <div className="flex items-center gap-2">
+                      <div className={cn(
+                        "w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold",
+                        step === 'streaming' ? "bg-primary text-bg animate-pulse" : (step === 'complete' ? "bg-success/20 text-success" : "border border-border text-text-muted")
+                      )}>
+                        {step === 'streaming' ? '3' : (step === 'complete' ? '✓' : '3')}
+                      </div>
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-text-muted">Infer</span>
+                   </div>
+                </div>
+
+                <div className="flex justify-between items-center bg-white/5 p-4 rounded-lg border border-border">
+                  <div className="space-y-1">
+                    <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest">Routing Outcome</p>
+                    {result ? (
+                      <div className="flex items-center gap-3">
+                         <ProviderBadge providerId={result.selectedProviderId as any} />
+                         <span className="text-text-muted text-xs">via {result.actualLlmModelUsed}</span>
+                      </div>
+                    ) : (
+                      <div className="h-6 w-32 bg-white/5 rounded animate-pulse" />
+                    )}
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {step === 'routing' ? <Loader2 className="w-4 h-4 animate-spin text-primary" /> : step === 'classifying' ? <div className="w-4 h-4 rounded-full border border-border" /> : <div className="w-4 h-4 rounded-full bg-success/20 text-success flex items-center justify-center text-[10px]">✓</div>}
-                      <span className="text-xs font-bold uppercase tracking-widest">Routing</span>
-                    </div>
-                    {result && <ProviderBadge providerId={result.selectedProviderId as any} />}
-                  </div>
+                  {classification && <TaskChip taskId={classification.taskType as any} />}
                 </div>
               </div>
 
-              {result && (
-                <div className="flex-1 overflow-auto p-6 space-y-6">
-                  <div className="space-y-3">
-                    <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-widest">LLM Response</h4>
-                    <div className="bg-white/5 border border-border rounded-md p-4 font-mono text-sm leading-relaxed whitespace-pre-wrap">
-                      {result.llmResponse}
-                    </div>
+              <div className="flex-1 overflow-auto p-6 space-y-6">
+                <div className="space-y-3">
+                  <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-widest">LLM Response</h4>
+                  <div className="bg-bg border border-border rounded-md p-6 font-mono text-sm leading-relaxed whitespace-pre-wrap min-h-[100px] relative">
+                    {step === 'streaming' && (
+                      <div className="absolute top-4 right-4 flex items-center gap-2">
+                         <Zap className="w-3 h-3 text-primary animate-pulse" />
+                         <span className="text-[9px] text-primary font-bold uppercase tracking-tighter">Streaming</span>
+                      </div>
+                    )}
+                    {streamedText || (step === 'classifying' || step === 'routing' ? "Awaiting inference..." : "")}
+                    {step === 'streaming' && <span className="inline-block w-2 h-4 bg-primary animate-pulse ml-1 align-middle" />}
                   </div>
+                </div>
 
+                {result && step === 'complete' && (
                   <div className="grid grid-cols-3 gap-4">
                     <div className="p-3 rounded-md bg-white/5 border border-border">
                       <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest mb-1">Latency</p>
@@ -153,33 +216,15 @@ export default function PlaygroundPage() {
                       <p className="text-sm font-bold font-mono text-primary">{(classification?.confidence || 0 * 100).toFixed(0)}%</p>
                     </div>
                     <div className="p-3 rounded-md bg-white/5 border border-border">
-                      <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest mb-1">Fallback</p>
-                      <p className="text-sm font-bold font-mono text-text-muted">No</p>
+                      <p className="text-[9px] font-bold text-text-muted uppercase tracking-widest mb-1">Safety</p>
+                      <div className="flex items-center gap-1.5">
+                         <CheckCircle className="w-3 h-3 text-success" />
+                         <span className="text-sm font-bold font-mono text-success">Passed</span>
+                      </div>
                     </div>
                   </div>
-
-                  <div className="pt-6 border-t border-border-subtle space-y-4">
-                    <h4 className="text-[10px] font-bold text-text-muted uppercase tracking-widest">Routing Decision Detail</h4>
-                    <div className="space-y-2">
-                      {result.routingDecisionDetails.map((decision, i) => (
-                        <div key={decision.providerId} className={cn(
-                          "flex items-center justify-between p-2 rounded-sm text-[11px]",
-                          i === 0 ? "bg-primary/10 border border-primary/20" : "bg-white/5"
-                        )}>
-                          <div className="flex items-center gap-2">
-                            {i === 0 && <span className="text-primary text-[10px]">★</span>}
-                            <span className={cn("font-medium", i === 0 ? "text-primary" : "text-text-secondary")}>{decision.providerName}</span>
-                          </div>
-                          <div className="flex items-center gap-4 font-mono">
-                            <span className="text-text-muted">{decision.compositeScore.toFixed(1)}/100</span>
-                            <span className="text-text-muted w-12 text-right">{decision.latencyP50}ms</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           )}
         </Card>

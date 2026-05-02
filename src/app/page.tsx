@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ChevronDown, Hexagon, Github, ArrowRight, Activity, Zap, Shield, Cpu } from "lucide-react";
+import { ChevronDown, Hexagon, Github, ArrowRight, Activity, Zap, Shield, Cpu, Code, Brain, Database, Server } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PROVIDERS, TASK_TYPES } from "@/lib/mock-data";
 import { ProviderBadge } from "@/components/shared/ProviderBadge";
@@ -37,6 +37,20 @@ export default function LandingPage() {
 
       {/* Hero */}
       <section className="relative flex-1 flex flex-col items-center justify-center py-20 px-6 overflow-hidden min-h-[90vh]">
+        {/* Animated Blobs */}
+        <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
+          <motion.div 
+            animate={{ x: [0, 50, -30, 0], y: [0, -40, 60, 0] }}
+            transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+            className="absolute top-1/4 left-1/4 w-[400px] h-[400px] bg-primary/10 rounded-full blur-[100px]"
+          />
+          <motion.div 
+            animate={{ x: [0, -60, 40, 0], y: [0, 50, -20, 0] }}
+            transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+            className="absolute top-1/2 right-1/4 w-[500px] h-[500px] bg-accent/10 rounded-full blur-[120px]"
+          />
+        </div>
+
         <motion.div 
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -132,6 +146,94 @@ export default function LandingPage() {
               <p className="text-text-secondary leading-relaxed">{item.desc}</p>
             </div>
           ))}
+        </div>
+      </section>
+
+      {/* Architecture SVG Flow Section */}
+      <section className="py-32 bg-bg overflow-hidden">
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-16 items-center">
+          <div className="space-y-8">
+            <h2 className="text-4xl md:text-5xl font-headline font-bold">The Neural Pipeline</h2>
+            <p className="text-text-secondary text-lg leading-relaxed">
+              Every request passes through our proprietary routing engine. We don't just pick a model; we pick the right model at the right time.
+            </p>
+            <div className="space-y-6">
+              {[
+                { label: 'Classification', desc: 'Instant task detection (Code, Reasoning, etc.)', icon: Brain },
+                { label: 'Load Balancing', desc: 'Real-time RPM and Latency monitoring', icon: Activity },
+                { label: 'Optimal Dispatch', desc: 'Direct routing to the highest-scoring available provider', icon: Zap }
+              ].map(feat => (
+                <div key={feat.label} className="flex gap-4">
+                  <div className="mt-1 w-6 h-6 text-primary"><feat.icon className="w-full h-full" /></div>
+                  <div>
+                    <h4 className="font-bold text-white">{feat.label}</h4>
+                    <p className="text-sm text-text-muted">{feat.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="relative p-12 rounded-2xl bg-surface/50 border border-border backdrop-blur-sm">
+            <svg viewBox="0 0 400 300" className="w-full h-auto">
+              {/* Nodes */}
+              <rect x="150" y="20" width="100" height="40" rx="8" className="fill-bg stroke-primary/30" />
+              <text x="200" y="45" textAnchor="middle" className="fill-white text-[10px] font-bold uppercase tracking-widest">User Prompt</text>
+
+              <rect x="50" y="120" width="100" height="40" rx="8" className="fill-bg stroke-primary/30" />
+              <text x="100" y="145" textAnchor="middle" className="fill-white text-[10px] font-bold uppercase tracking-widest">Classifier</text>
+
+              <rect x="250" y="120" width="100" height="40" rx="8" className="fill-bg stroke-primary/30" />
+              <text x="300" y="145" textAnchor="middle" className="fill-white text-[10px] font-bold uppercase tracking-widest">Benchmark Data</text>
+
+              <rect x="150" y="220" width="100" height="40" rx="8" className="fill-bg stroke-primary" />
+              <text x="200" y="245" textAnchor="middle" className="fill-primary text-[10px] font-bold uppercase tracking-widest">Router Engine</text>
+
+              {/* Paths */}
+              <motion.path 
+                d="M200 60 L100 120" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="1.5" 
+                className="text-primary/20"
+                strokeDasharray="4 4"
+                animate={{ strokeDashoffset: [0, -20] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              />
+              <motion.path 
+                d="M200 60 L300 120" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="1.5" 
+                className="text-primary/20"
+                strokeDasharray="4 4"
+                animate={{ strokeDashoffset: [0, -20] }}
+                transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              />
+              <motion.path 
+                d="M100 160 L200 220" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                className="text-primary"
+                strokeDasharray="100"
+                strokeDashoffset="100"
+                animate={{ strokeDashoffset: 0 }}
+                transition={{ duration: 1, delay: 0.5, repeat: Infinity, repeatDelay: 2 }}
+              />
+              <motion.path 
+                d="M300 160 L200 220" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                className="text-primary"
+                strokeDasharray="100"
+                strokeDashoffset="100"
+                animate={{ strokeDashoffset: 0 }}
+                transition={{ duration: 1, delay: 0.5, repeat: Infinity, repeatDelay: 2 }}
+              />
+            </svg>
+          </div>
         </div>
       </section>
 
